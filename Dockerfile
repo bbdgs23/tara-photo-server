@@ -1,28 +1,30 @@
-FROM python:3.10-slim
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
 WORKDIR /app
 
-# 필요한 시스템 패키지 설치
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 파이썬 패키지 설치
+# Copy requirements file
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 애플리케이션 코드 복사
+# Copy the rest of the application code
 COPY . .
 
-# 필요한 디렉토리 생성
-RUN mkdir -p uploads outputs temp
-
-# 포트 노출
+# Expose the port the app runs on
 EXPOSE 5050
 
-# 환경 변수 설정
-ENV PYTHONUNBUFFERED=1
-
-# 실행 명령어
+# Use uvicorn to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5050"]

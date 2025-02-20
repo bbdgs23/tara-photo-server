@@ -1,18 +1,49 @@
-version: '3'
+version: '3.8'
 
 services:
-  api:
-    build: .
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "7860:7860"
+      - "5050:5050"
     environment:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - TZ=Asia/Seoul  # 한국 시간대 설정
     volumes:
-      - ./outputs:/app/outputs
+      - .:/app
+      - ./logs:/app/logs  # 로그 볼륨 마운트
+    env_file:
+      - .env
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    networks:
+      - app-network
+
+  # 선택적: 로깅 서비스
+  logs:
+    image: alpine
+    volumes:
+      - ./logs:/logs
+    command: tail -f /logs/app.log
+    networks:
+      - app-network
+
+  # 선택적: Redis 캐시 서비스 (필요한 경우 주석 해제)
+  # redis:
+  #   image: redis:alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# 선택적 볼륨
+volumes:
+  # redis-data:
+  logs:
+    driver: local
